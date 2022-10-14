@@ -3,19 +3,20 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.CompressorSubsystem;
 
-public class SetCompressor extends CommandBase{
+public class SetSolenoid extends CommandBase{
     private final CompressorSubsystem compressorSubsystem;
-    public boolean enable;
+    public boolean on;
 
-    public SetCompressor(CompressorSubsystem subsystem, boolean enable){
+    public SetSolenoid(CompressorSubsystem subsystem, boolean fire){
+        subsystem.setCompressor(true);
         compressorSubsystem = subsystem;
         addRequirements(compressorSubsystem);
-        this.enable = enable;
+        this.on = fire;
     }
 
     @Override
     public void initialize(){
-        compressorSubsystem.setCompressor(enable);
+        compressorSubsystem.fire(on);
     }
 
     @Override
