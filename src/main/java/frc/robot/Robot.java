@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -16,16 +17,15 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.HelicopterConstants;
 import frc.robot.commands.SetCompressor;
 import frc.robot.commands.SetIntake;
-import frc.robot.commands.SetRaiseMotorPercentage;
-import frc.robot.commands.SetRaiseMotorPosition;
+import frc.robot.commands.SetShooterAngle;
 import frc.robot.commands.SetSolenoid;
 import frc.robot.commands.ToggleDriveMode;
-import frc.robot.commands.ToggleManualArm;
-import frc.robot.commands.ZeroRaiseMotors;
+import frc.robot.commands.ToggleIntake;
+import frc.robot.commands.ToggleShooterMotor;
 import frc.robot.subsystems.CompressorSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.RaiseSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 
 /**
  * This is a demo program showing the use of the RobotDrive class, specifically it contains the code
@@ -41,84 +41,60 @@ public class Robot extends TimedRobot {
   TalonFX frontRight = new TalonFX(Constants.DriveConstants.frontRightID);
   TalonFX backRight = new TalonFX(Constants.DriveConstants.backRightID);
 
-  TalonFX intake = new TalonFX(Constants.IntakeConstants.intakeID);
+  TalonFX winchMotor = new TalonFX(Constants.WinchConstants.winchID);
 
-  public boolean manual = false;
+  TalonFX intake = new TalonFX(Constants.IntakeConstants.intakeID);
 
   private Joystick driverController;
   private Joystick operatorController;
   private XboxController thirdController;
 
+  private JoystickButton intakeButton;
   private JoystickButton compressorShutoff;
   private JoystickButton fireButton;
   private JoystickButton retractButton;
   private JoystickButton compressorStart;
+  private JoystickButton toggleIntake;
   private JoystickButton toggleDriveMode;
-  private JoystickButton forwardIntakeButton;
-  private JoystickButton reverseIntakeButton;
-  private JoystickButton decreaseRaiseMotor;
-  private JoystickButton increaseRaiseMotor;
-  private JoystickButton increaseRaiseMotorPercentage;
-  private JoystickButton decreaseRaiseMotorPercentage;
-  private JoystickButton raiseMotorShutoff;
-  private JoystickButton resetEncoders;
-  private JoystickButton toggleManualArm;
-
-
+  private JoystickButton increaseShooterAngle;
+  private JoystickButton decreaseShooterAngle;
+  private JoystickButton toggleShooterMotor;
 
   DriveSubsystem driveSubsystem;
   CompressorSubsystem compressorSubsystem;
   IntakeSubsystem intakeSubsystem;
-  RaiseSubsystem raiseSubsystem;
+  ShooterSubsystem shooterSubsystem;
 
   public void configureButtons(){
-    //Driver Controller
-    compressorStart = new JoystickButton(driverController, Constants.HelicopterConstants.B8);
+    intakeButton = new JoystickButton(operatorController, Constants.HelicopterConstants.triggerPort);
+    intakeButton.whenPressed(new SetIntake(intakeSubsystem, true)).whenReleased(new SetIntake(intakeSubsystem, false));
+
+    compressorStart = new JoystickButton(operatorController, Constants.HelicopterConstants.B8);
     compressorStart.whenPressed(new SetCompressor(compressorSubsystem, true));
 
-    compressorShutoff = new JoystickButton(driverController, Constants.HelicopterConstants.B9);
+    compressorShutoff = new JoystickButton(operatorController, Constants.HelicopterConstants.B9);
     compressorShutoff.whenPressed(new SetCompressor(compressorSubsystem, false));
+
+    fireButton = new JoystickButton(operatorController, Constants.HelicopterConstants.B4);
+    fireButton.whenPressed(new SetSolenoid(compressorSubsystem, true));
+
+    retractButton = new JoystickButton(operatorController, Constants.HelicopterConstants.B5);
+    retractButton.whenPressed(new SetSolenoid(compressorSubsystem, false));
+
+    toggleIntake = new JoystickButton(operatorController, Constants.HelicopterConstants.B2);
+    toggleIntake.whenPressed(new ToggleIntake(intakeSubsystem));
 
     toggleDriveMode = new JoystickButton(driverController, Constants.HelicopterConstants.B6);
     toggleDriveMode.whenPressed(new ToggleDriveMode(driveSubsystem));
 
-    resetEncoders = new JoystickButton(driverController, Constants.HelicopterConstants.B9);
-    resetEncoders.whenPressed(new ZeroRaiseMotors(raiseSubsystem));
+    //increaseShooterAngle = new JoystickButton(operatorController, Constants.HelicopterConstants.B4);
+    //increaseShooterAngle.whenPressed(new SetShooterAngle(shooterSubsystem, true));
 
-    //Operator Controller
-    //Intake Subsystem
-    forwardIntakeButton = new JoystickButton(operatorController, Constants.HelicopterConstants.triggerPort);
-    forwardIntakeButton.whenPressed(new SetIntake(intakeSubsystem, true, true)).whenReleased(new SetIntake(intakeSubsystem, false, true));
+    //decreaseShooterAngle = new JoystickButton(operatorController, Constants.HelicopterConstants.B5);
+    //decreaseShooterAngle.whenPressed(new SetShooterAngle(shooterSubsystem, false));
 
-    reverseIntakeButton = new JoystickButton(operatorController, Constants.HelicopterConstants.B2);
-    reverseIntakeButton.whenPressed(new SetIntake(intakeSubsystem, true, false)).whenReleased(new SetIntake(intakeSubsystem, false, false));
-
-    //Compressor Subsystem
-    fireButton = new JoystickButton(operatorController, Constants.HelicopterConstants.B8);
-    fireButton.whenPressed(new SetSolenoid(compressorSubsystem, true));
-
-    retractButton = new JoystickButton(operatorController, Constants.HelicopterConstants.B9);
-    retractButton.whenPressed(new SetSolenoid(compressorSubsystem, false));
-
-    //Winch / Raise Motor Subsystem
-    increaseRaiseMotor = new JoystickButton(operatorController, Constants.HelicopterConstants.B6);
-    increaseRaiseMotor.whenPressed(new SetRaiseMotorPosition(raiseSubsystem, true));
-
-    decreaseRaiseMotor = new JoystickButton(operatorController, Constants.HelicopterConstants.B7);
-    decreaseRaiseMotor.whenPressed(new SetRaiseMotorPosition(raiseSubsystem, false));
-
-    increaseRaiseMotorPercentage = new JoystickButton(operatorController, Constants.HelicopterConstants.B10);
-    increaseRaiseMotorPercentage.whenPressed(new SetRaiseMotorPercentage(raiseSubsystem, true, false));
-
-    decreaseRaiseMotorPercentage = new JoystickButton(operatorController, Constants.HelicopterConstants.B11);
-    decreaseRaiseMotorPercentage.whenPressed(new SetRaiseMotorPercentage(raiseSubsystem, false, false));
-
-    raiseMotorShutoff = new JoystickButton(operatorController, Constants.HelicopterConstants.B4);
-    raiseMotorShutoff.whenPressed(new SetRaiseMotorPercentage(raiseSubsystem, true, true));
-
-    toggleManualArm = new JoystickButton(operatorController, HelicopterConstants.B3);
-    toggleManualArm.whenPressed(new ToggleManualArm(raiseSubsystem));
-
+    //toggleShooterMotor = new JoystickButton(operatorController, HelicopterConstants.B6);
+    //toggleShooterMotor.whenPressed(new ToggleShooterMotor(shooterSubsystem));
   }
 
   @Override
@@ -129,10 +105,13 @@ public class Robot extends TimedRobot {
 
     intakeSubsystem = new IntakeSubsystem();
     compressorSubsystem = new CompressorSubsystem();
-    raiseSubsystem = new RaiseSubsystem();
+    //shooterSubsystem = new ShooterSubsystem();
     driveSubsystem = new DriveSubsystem(frontLeft, frontRight, backLeft, backRight);
 
     configureButtons();
+    
+    winchMotor.setNeutralMode(NeutralMode.Brake);
+    winchMotor.setInverted(true);
   }
 
   @Override
@@ -147,10 +126,8 @@ public class Robot extends TimedRobot {
     }
     else{
       driveSubsystem.driveArcade(driverController.getX(), driverController.getY(), frontLeft, frontRight);
-      //make a variable/function to toggle if the operator can control the arm or not
-      if(raiseSubsystem.manual){
-        raiseSubsystem.raiseMotor1.set(ControlMode.PercentOutput, operatorController.getY());
-      }
+      winchMotor.set(ControlMode.PercentOutput, operatorController.getY());
+      //intake.set(ControlMode.PercentOutput, operatorController.getY());
     }
   }
 

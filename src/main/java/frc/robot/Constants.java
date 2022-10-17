@@ -3,7 +3,6 @@ package frc.robot;
 public final class Constants {
     public static final class Globals{
         public static boolean isSlowModeActive = true;
-        public static double slowModeFactor = 2.5;
         public static boolean isShooterMotorActive = false;
         public static boolean isIntakeActive = false;
         public static boolean driveMode = false; //true is tank, false is arcade
@@ -30,19 +29,11 @@ public final class Constants {
 
     public static final class IntakeConstants{
         public static final int intakeID = 8;
-        public static double percentOutput = 1;
+        public static double percentOutput = .8;
     }
 
     public static final class WinchConstants{
         public static final int winchID = 10;
-    }
-
-    public static final class RaiseConstants{
-        public static final int RAISE_1_MOTOR_ID = 10;
-        public static final int RAISE_2_MOTOR_ID = 11;
-        public static final double RAISE_MIN = 0;
-        public static final double RAISE_MAX = 275633.0;
-        public static final double RAISE_MOTOR_PERCENTAGE = 0.25;
     }
 
     public static final class ShooterConstants{

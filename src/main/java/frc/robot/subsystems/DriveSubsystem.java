@@ -31,18 +31,18 @@ public class DriveSubsystem extends SubsystemBase{
     }
 
     public void driveTank(double driveLeft, double driveRight, TalonFX frontLeft, TalonFX frontRight){
-        driveLeft = Constants.Globals.isSlowModeActive ? driveLeft / Constants.Globals.slowModeFactor : driveLeft;
-        driveRight = Constants.Globals.isSlowModeActive ? driveRight / Constants.Globals.slowModeFactor : driveRight;
+        driveLeft = Constants.Globals.isSlowModeActive ? driveLeft / 2 : driveLeft;
+        driveRight = Constants.Globals.isSlowModeActive ? driveRight / 2 : driveRight;
 
         frontLeft.set(ControlMode.PercentOutput, driveLeft);
         frontRight.set(ControlMode.PercentOutput, driveRight);
     }
 
     public void driveArcade(double directionHorizontal, double throttle, TalonFX frontLeft, TalonFX frontRight){
-        throttle = Constants.Globals.isSlowModeActive ? throttle / Constants.Globals.slowModeFactor : throttle;
+        throttle = Constants.Globals.isSlowModeActive ? throttle / 2 : throttle;
         double turnSpeed = (
             Constants.DriveConstants.TURN_SENSITIVITY * directionHorizontal * directionHorizontal * directionHorizontal
-            ) / (Constants.Globals.isSlowModeActive ? Constants.Globals.slowModeFactor : 1);
+            ) / (Constants.Globals.isSlowModeActive ? 2 : 1);
 
         double clampedLeft = (throttle + turnSpeed) > 1 ? 1 : ((throttle + turnSpeed) < -1 ? -1 : (throttle + turnSpeed));
         double clampedRight = (throttle - turnSpeed) > 1 ? 1 : ((throttle - turnSpeed) < -1 ? -1 : (throttle - turnSpeed));
